@@ -1,7 +1,5 @@
 import NextAuth, { type DefaultSession } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import GitHub from "next-auth/providers/github"
-import Google from "next-auth/providers/google"
 import authConfig from "./auth.config"
 import { db } from "./lib/db"
 import { getUserById } from "./data/user"
@@ -38,9 +36,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
     },
     callbacks: {
-        async signIn({user}) {
+        async signIn({user, account}) {
+            if(account?.provider !== "credentials") return true;
+
             const existingUser = await getUserById(user.id);
+            
+            //Prevent Sign in without email verification
+            if (!existingUser?.emailVerified) return false;
             // if(!existingUser || !existingUser.emailVerified) return false
+            
+            // a
             return true;
         },
         async session({ token, session }) {
